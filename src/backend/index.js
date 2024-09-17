@@ -32,40 +32,43 @@ Notebook
 
 // params: ids
 app.get("/notebook", async (req, res) => {
-    const {ids} = req.query;
+    const {ids, filter} = req.query;
 
-    let resp;
-    if(ids == null || ids == undefined || ids.length == 0)
-        resp = await NotebookMDB.find()
-    else{
-        const idList = ids.split(",").map(id => id.trim())
-        resp = await NotebookMDB.find({_id: {$in: idList}})
-    }
+    const searchCriteria = {}
 
-    res.json({data: resp})
+    if(ids)
+        searchCriteria['_id'] = {$in: ids.split(",").map(id => id.trim())}
+        
+    if(filter && filter != 'undefined')
+        searchCriteria['$or'] = [
+            {title: {"$regex": filter, "$options": "i"}}
+        ]
+
+    const resp = await NotebookMDB.find(searchCriteria)
+    res.json(utils.formatMessage(0, "Retrieved records", resp))
 })
 
 app.post("/notebook", async (req, res) => {
-    const {title, notebookBannerImg} = req.query; 
+    const {notebookId} = req.query;
+    const {title, notebookBannerImg} = req.body; 
 
-    if(!title) return res.json({
-        error: true, 
-        message: 'Title is required'
-    }); 
-
-    const isNotebook = await NotebookMDB.findOne({title: title})
-    if(isNotebook) return res.json({
-        error:true, 
-        message: `Notebook ${title} already exists`
-    });
-
-    const notebook = new NotebookMDB({
-        title: title, 
-        bannerImg: notebookBannerImg
-    });
-
-    await notebook.save(); 
-    res.json({data: `Created notebook: ${notebook.id}`});
+    if(!notebookId){
+        const newNotebook = new NotebookMDB({
+            title: title, 
+            bannerImg: notebookBannerImg
+        }); 
+        await newNotebook.save(); 
+        return res.json(utils.formatMessage(0, "Notebook created", [{id: newNotebook.id}]))
+    }else {
+        const upatedNotebook = await NotebookMDB.updateOne(
+            {_id: notebookId}, 
+            {$set: {
+                title: title, 
+                bannerImg: notebookBannerImg
+            }}
+        )
+        return res.json(utils.formatMessage(0, "Record Updated"))
+    }
 })
 
 // params: id={string[]} (comma separated)
@@ -74,18 +77,11 @@ app.delete("/notebook", async (req, res) => {
 
     const idList = ids.split(",").map(id => id.trim())
 
-    if(!ids || idList.length < 0) return res.json({
-        error: true, 
-        message: `ids parameter cannot be empty`
-    })
+    if(!ids || idList.length < 0) 
+        return res.json(utils.formatMessage(100, "Parameter `ids` cannot be empty"))
 
-    //acknowledged:true,deletedCount
-
-    const resp = await NotebookMDB.deleteMany({_id: {$in: idList}})
-    res.json({data: {
-        ids: idList, 
-        ...resp
-    }})
+    const resp = await NotebookMDB.deleteMany({_id: {$in: idList}});
+    return res.json(utils.formatMessage(0, "Record Updated"))
 })
 
 
@@ -141,17 +137,28 @@ app.post("/note", async (req, res) => {
 
 // params: noteId={[]string} or notebookId={string}
 app.get("/note", async (req, res) => {
-    const {noteId, notebookId} = req.query;
-    
-    let queryRes;
-    if(!noteId && !notebookId){
-        queryRes = await NoteMDB.find({})
-    }else if (noteId){
-        queryRes = await NoteMDB.find({_id: noteId.split(",").map(id => id.trim())})
-    }else {
-        queryRes = await NoteMDB.find({notebooks: notebookId})
-    }
+    const {noteId, notebookId, filter} = req.query;
+    let searchCriteria = {}
 
+    console.log(filter)
+
+    if(noteId)
+        searchCriteria['_id'] = noteId.split(",").map(id => id.trim())
+    
+    if(notebookId)
+        searchCriteria['notebooks'] = notebookId
+
+    if(filter && filter != 'undefined')
+        searchCriteria['$or'] = [
+            {title: {"$regex": filter, "$options": "i"}},
+            {text: {"$regex": filter, "$options": "i"}},
+            {tags: {"$regex": filter, "$options": "i"}},
+        ]
+
+    console.log(searchCriteria)
+
+    const queryRes = await NoteMDB.find(searchCriteria)
+    console.log(queryRes)
     return res.json(utils.formatMessage(0, "Retrieved records", queryRes))
 })
 
