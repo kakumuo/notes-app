@@ -5,7 +5,6 @@ import { Box } from '@mui/joy';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 
 import { AllNotebooksPage } from './pages/AllNotesPage';
-import { CalendarPage } from './pages/CalendarPage';
 import { NotebookPage } from './pages/NotebookPage';
 import { NotebookType } from './util/types';
 import { NoteEditPage } from './pages/NoteEditPage';
@@ -16,7 +15,6 @@ const serverPath = "http://127.0.0.1:8000"
 
 const quickNavItems = [
   {label: 'Notebooks', path: '/', icon: <LibraryBooksOutlined />, isQuickNav: true},
-  {label: 'Calendar', path: '/calendar', icon: <CalendarTodayOutlined />, isQuickNav: true},
 ]
 
 function App() {
@@ -71,7 +69,6 @@ function App() {
       <Sidebar curLabel={targetNavLabel} onSelect={handleSidebarSelect} onUpdateNotebookList={handleNotebookUpdate} sidebarItems={sidebarItems} />
       <Routes>
         <Route path='/' element={<AllNotebooksPage />} />
-        <Route path='/calendar' element={<CalendarPage />} />
         <Route path='/notebook/:notebookId' element={<NotebookPage />}>
           <Route path='note/:noteId' element={<NoteEditPage />} />
         </Route>

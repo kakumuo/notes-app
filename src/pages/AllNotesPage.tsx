@@ -61,7 +61,7 @@ export const AllNotebooksPage = () => {
 
 const NotebookPreview = ({notebook}:{notebook:NotebookType}) => {
     return <Box position={'relative'} display={'grid'}  padding={2} border={'solid'} 
-        sx={{backgroundImage: `url(${notebook.bannerImg})`, backgroundSize: 'contain'}}
+        sx={{backgroundImage: `url(${notebook.bannerImg})`, backgroundSize: 'cover'}}
         onClick={() => window.location.href = `http://127.0.0.1:3000/notebook/${notebook._id}`}
     >
         <Typography level='title-lg'>{notebook.title}</Typography>
