@@ -4,6 +4,7 @@ import { NotebookType, NoteType } from '../util/types'
 import { Outlet, useParams } from 'react-router'
 import { MoreHorizOutlined, Notes } from '@mui/icons-material'
 import { dateToString } from '../util/utils'
+import { RichTextEditor } from '../components/RichTextEditor'
 
 const autosaveThres:number = 1000 * 1;
 
@@ -76,10 +77,10 @@ export const NoteEditPage = () => {
             <Typography level='body-sm'>{`Last Edited ${ dateToString(note.updated)}`}</Typography>
         </Box>
 
-        <textarea style={{resize: 'none', height: '100%'}} defaultValue={note.text} onChange={(ev) => handleNoteUpdate({text: ev.target.value})} />
+        <RichTextEditor style={{resize: 'none', height: '100%'}} text={note.text} onChange={(ev) => handleNoteUpdate({text: ev.target.value})}/>
 
-        <Box display={'inline-list-item'}>
-            {note.tags.map((tag, tagI) => <Chip sx={{display: 'inline-grid'}}>{tag}<ChipDelete onDelete={() => handleTagDelete(tagI)} key={tagI}/></Chip>)}
+        <Box display={'inline-list-item'} gap={1}>
+            {note.tags.map((tag, tagI) => <Chip sx={{display: 'inline-grid', margin: 1}}>{tag}<ChipDelete onDelete={() => handleTagDelete(tagI)} key={tagI}/></Chip>)}
             <Input placeholder='Add Tag' 
                 onKeyDown={(ev) => {
                     if(ev.key == 'Enter'){

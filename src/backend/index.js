@@ -52,6 +52,8 @@ app.post("/notebook", async (req, res) => {
     const {notebookId} = req.query;
     const {title, notebookBannerImg} = req.body; 
 
+    console.log(title, notebookBannerImg)
+
     if(!notebookId){
         const newNotebook = new NotebookMDB({
             title: title, 
@@ -140,8 +142,6 @@ app.get("/note", async (req, res) => {
     const {noteId, notebookId, filter} = req.query;
     let searchCriteria = {}
 
-    console.log(filter)
-
     if(noteId)
         searchCriteria['_id'] = noteId.split(",").map(id => id.trim())
     
@@ -155,10 +155,8 @@ app.get("/note", async (req, res) => {
             {tags: {"$regex": filter, "$options": "i"}},
         ]
 
-    console.log(searchCriteria)
 
     const queryRes = await NoteMDB.find(searchCriteria)
-    console.log(queryRes)
     return res.json(utils.formatMessage(0, "Retrieved records", queryRes))
 })
 

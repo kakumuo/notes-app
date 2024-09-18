@@ -1,10 +1,11 @@
 import { AddBoxOutlined, MoreHorizOutlined } from '@mui/icons-material'
-import { Box, Button, Chip, ChipDelete, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem } from '@mui/joy'
+import { Box, Button, Chip, ChipDelete, Divider, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog } from '@mui/joy'
 import { Typography } from '@mui/joy'
 import React from 'react'
 import { Outlet, useParams, Link, useLocation } from 'react-router-dom';
 import { NotebookType, NoteType } from '../util/types'
 import { dateToString } from '../util/utils';
+
 
 export const NotebookPage = () => {
     const {notebookId} = useParams()
@@ -42,7 +43,7 @@ export const NotebookPage = () => {
         })()
     }, [notebookId, isNoteSelected])
 
-    const handleRename = (newTitle:string) => {
+    const handleRename = (newTitle:string, newBannerImg:string) => {
         const updatedNotebook = Object.assign({}, notebook); 
         updatedNotebook.title = newTitle
         const requestInit:RequestInit = {
@@ -50,7 +51,7 @@ export const NotebookPage = () => {
             headers: {'Content-Type':'application/json'}, 
             body: JSON.stringify({
                 title: newTitle, 
-                notebookBannerImg: updatedNotebook.bannerImg
+                notebookBannerImg: newBannerImg
             })
         }
 
@@ -76,7 +77,7 @@ export const NotebookPage = () => {
     }
 
     return <Box display={'flex'} flexDirection={'column'} gap={1} height={'100%'} position={'relative'}>
-        <NoteBanner notebook={notebook} expand={isNoteSelected} onDelete={handleDelete} onRename={handleRename}
+        <NoteBanner notebook={notebook} expand={isNoteSelected} onDelete={handleDelete} onEdit={handleRename}
             searchFilter={searchFilter} setSearchFilter={handleFilterUpdate}   
         />
 
@@ -105,7 +106,8 @@ export const NotebookPage = () => {
 
                 <Button sx={{
                         height: '100px', position: 'absolute', bottom: 0, right: 0
-                    }} color='success'
+                    }} 
+                    color='primary'
                     onClick={() => {
                         const requestInit:RequestInit = {
                             method: 'post', 
@@ -134,11 +136,22 @@ export const NotebookPage = () => {
 }
 
 const NoteBanner = (
-        {notebook, expand, onRename, onDelete, searchFilter, setSearchFilter}
-        :{searchFilter:string|undefined, setSearchFilter:(f:string|undefined)=>void, notebook:NotebookType, expand:boolean, onRename:(newName:string)=>void, onDelete:()=>void}) => {
+        {notebook, expand, onEdit, onDelete, searchFilter, setSearchFilter}
+        :{searchFilter:string|undefined, setSearchFilter:(f:string|undefined)=>void, notebook:NotebookType, expand:boolean, onEdit:(newName:string, newBannerImg:string)=>void, onDelete:()=>void}) => {
     const [isEditing, setIsEditing] = React.useState(false);
+    const [changeBackgroundModalOpen, setChangeBackgroundModalOpen] = React.useState(false);
+     
+    const handleChangeBackgroundModalClose = (imagePath:string|undefined) => {
+        setChangeBackgroundModalOpen(false);
+        
+        console.log(imagePath)
+        if(imagePath){
+            
+            onEdit(notebook.title, imagePath)
+        }
+    }
 
-    return <Box display={'flex'} flexWrap={'wrap'} sx={{ backgroundImage: `url(${notebook.bannerImg})`}}
+    return <Box display={'flex'} flexWrap={'wrap'} sx={{ backgroundImage: `url(${notebook.bannerImg})`, backgroundSize: 'cover'}}
         padding={1} gap={1} border={'solid'}
         marginBottom={2}
         height={expand ? 'auto' : '200px'}
@@ -153,13 +166,16 @@ const NoteBanner = (
                     ev.currentTarget.value = "";
                 }
             }} sx={{flex: '3 1 auto'}}/>
+            <ChangeBackgroundModal curBackground={notebook.bannerImg} open={changeBackgroundModalOpen} onClose={handleChangeBackgroundModalClose} />
             <Dropdown>
                 <MenuButton sx={{flex: '0 0 auto'}}>
                     <MoreHorizOutlined />
                 </MenuButton>
                 <Menu>
                     <MenuItem onClick={() => setIsEditing(true)}>Rename</MenuItem>
-                    <MenuItem onClick={onDelete}>Delete</MenuItem>
+                    <MenuItem onClick={() => setChangeBackgroundModalOpen(true)}>Change Background </MenuItem>
+                    <Divider />
+                    <MenuItem onClick={onDelete} color='danger'>Delete</MenuItem>
                 </Menu>
             </Dropdown>
             {searchFilter && <Typography sx={{width: '100%'}}>
@@ -168,21 +184,49 @@ const NoteBanner = (
                 </Typography>}
             {
                 isEditing ? 
-                <Input sx={{width: '100%', height: '75%'}} placeholder={notebook.title} 
+                <Input sx={{width: '100%', height: '75%'}} placeholder={notebook.title}
+                    autoFocus
+                    onBlur={(ev) => {
+                        if(ev.currentTarget.value.trim() != "") 
+                            onEdit(ev.currentTarget.value.trim(), notebook.bannerImg)
+                        setIsEditing(false)
+                    }}
                     onKeyDown={(ev) => {
                         if(ev.key == 'Enter' && ev.currentTarget.value.trim() != ''){
-                            onRename(ev.currentTarget.value)
+                            onEdit(ev.currentTarget.value.trim(), notebook.bannerImg)
                             setIsEditing(false)
                         }
                     }}
                 />
-                : <Typography onDoubleClick={()=>setIsEditing(true)} onBlur={() => setIsEditing(false)} 
+                : <Typography onDoubleClick={()=> setIsEditing(true)} onBlur={() => setIsEditing(false)} 
                     level='h1' width={"100%"} height={'100%'} >{notebook.title}</Typography>
             }
         </>}
     </Box>
 }
 
+
+const ChangeBackgroundModal = ({curBackground, open, onClose}:{curBackground:string, open:boolean, onClose:(imagePath:string|undefined)=>void}) => {
+    const [inputVal, setInputVal] = React.useState("");  
+
+    return(
+        <Modal open={open}>
+        <ModalDialog>
+            <Typography level='h2'>Change Background</Typography>
+            <Box display={'grid'} gridTemplateColumns={'minmax(auto, 300px) minmax(auto, 300px)'} gridTemplateRows={'minmax(auto, 300px)'} 
+                alignItems={'center'} gap={2}
+            >
+                <img src={curBackground}/>
+                <Input onChange={(ev) => setInputVal(ev.currentTarget.value)} sx={{border: 'dotted 5px lightgray', width: '100%', height: '100%'}} type='text' />
+            </Box>
+            <Box width={'100%'} display={'inline-grid'} gap={1} gridTemplateColumns={'repeat(2, 1fr)'}>
+                <Button color='danger' onClick={() => onClose(undefined)}>Cancel</Button>
+                <Button onClick={() => onClose(inputVal.trim() != "" ? inputVal.trim() : curBackground) }>Confirm</Button>
+            </Box>
+        </ModalDialog>
+        </Modal>
+    )
+}
 
 const NotePreview = ({note, onClick, onDelete}:{note:NoteType, onClick:()=>void, onDelete:()=>void}) => {
 
@@ -201,7 +245,7 @@ const NotePreview = ({note, onClick, onDelete}:{note:NoteType, onClick:()=>void,
                 <MenuButton className='ignoreClick'><MoreHorizOutlined /></MenuButton>
                 <Menu className='ignoreClick'>
                     <MenuItem onClick={onClick}>Edit</MenuItem>
-                    <MenuItem onClick={onDelete}>Delete</MenuItem>
+                    <MenuItem onClick={onDelete} color='danger'>Delete</MenuItem>
                 </Menu>
             </Dropdown>
             

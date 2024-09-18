@@ -17,7 +17,6 @@ export const AllNotebooksPage = () => {
         .then(respJson => {
             if(respJson.success){
                 setNotebooks(respJson.data)
-                console.log(respJson.data);
             }
         })
     }
@@ -28,7 +27,6 @@ export const AllNotebooksPage = () => {
             .then(respJson => {
                 if(respJson.success){
                     setNotebooks(respJson.data)
-                    console.log(respJson.data);
                 }
             })
     }, [])
@@ -62,7 +60,7 @@ export const AllNotebooksPage = () => {
 }
 
 const NotebookPreview = ({notebook}:{notebook:NotebookType}) => {
-    return <Box position={'relative'} display={'grid'}  padding={2} 
+    return <Box position={'relative'} display={'grid'}  padding={2} border={'solid'} 
         sx={{backgroundImage: `url(${notebook.bannerImg})`, backgroundSize: 'contain'}}
         onClick={() => window.location.href = `http://127.0.0.1:3000/notebook/${notebook._id}`}
     >
