@@ -1,0 +1,32 @@
+{
+    "version": "0.1.0",
+    "configurations": [
+        {
+            "name": "React App",
+            "type": "node",
+            "request": "launch",
+            "env": {
+                "HOST": "127.0.0.1"
+            },
+            "runtimeExecutable": "npm",
+            "args": ["run", "start"],
+            "cwd": "${workspaceFolder}", 
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Node.js App",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "args": ["run", "start"],
+            "cwd": "${workspaceFolder}/src/backend",
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "React + Node.js",
+            "configurations": ["Node.js App", "React App"]
+        }
+    ]
+}
